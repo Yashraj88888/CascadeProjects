@@ -1,0 +1,13 @@
+{
+  "name": "linklens-root",
+  "version": "1.0.0",
+  "description": "LinkLens InfoSec Portal - Root Package",
+  "scripts": {
+    "mock-zap": "node mock-zap-server.js",
+    "diagnose": "./diagnose-zap.sh"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  }
+}

@@ -1,0 +1,113 @@
+
+> infosec-portal-client@0.1.0 start
+> react-scripts start
+
+(node:11099) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:11099) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+Starting the development server...
+
+Compiled successfully!
+
+You can now view infosec-portal-client in the browser.
+
+  Local:            http://localhost:3000
+  On Your Network:  http://10.87.5.107:3000
+
+Note that the development build is not optimized.
+To create a production build, use npm run build.
+
+webpack compiled successfully
+Files successfully emitted, waiting for typecheck results...
+Issues checking in progress...
+Proxy error: Could not proxy request /favicon.ico from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+No issues found.
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /api/zap/health?zapUrl=http:%2F%2Flocalhost:8080&zapApiKey= from localhost:3000 to http://localhost:5001.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+

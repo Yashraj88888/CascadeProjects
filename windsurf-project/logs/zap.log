@@ -1,0 +1,5 @@
+Found Java version 23.0.1
+Available memory: 7862 MB
+Using JVM args: -Xmx1965m
+Picked up _JAVA_OPTIONS: -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true
+The home directory is already in use. Ensure no other ZAP instances are running with the same home directory: /home/ysrj/.ZAP/
