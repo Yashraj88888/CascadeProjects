@@ -253,22 +253,30 @@ app.post('/api/wireshark/capture/start', (req, res) => {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
 
-  // Build tshark capture command
-  const filter = `host ${host}`;
-  const cmd = `timeout ${duration} tshark -i any -f "${filter}" -w ${pcapFile} 2>&1`;
+  // Build dumpcap command for better performance and reliability
+  const filter = `host ${host} and not port 5001 and not port 5002`; // Exclude our own API traffic
+  const cmd = `timeout ${duration + 5} dumpcap \
+    -i wlan0 \
+    -f "${filter}" \
+    -w ${pcapFile} \
+    -p \
+    -q \
+    -s 0 \
+    --no-promiscuous-mode \
+    2>&1`;
 
   console.log(`Starting capture for ${host} (${duration}s): ${captureId}`);
   console.log(`Command: ${cmd}`);
   console.log(`Output file: ${pcapFile}`);
   
-  // Verify tshark is installed and accessible
-  exec('which tshark', (tsharkCheckError, tsharkPath) => {
-    if (tsharkCheckError || !tsharkPath.trim()) {
-      const errorMsg = 'tshark not found. Please install Wireshark/tshark first.';
+  // Verify dumpcap is installed and accessible
+  exec('which dumpcap', (dumpcapCheckError, dumpcapPath) => {
+    if (dumpcapCheckError || !dumpcapPath.trim()) {
+      const errorMsg = 'dumpcap not found. Please install Wireshark first.';
       console.error(errorMsg);
       return res.status(500).json({ 
         error: 'Dependency Missing',
-        message: 'tshark is not installed. Please install Wireshark/tshark to use this feature.'
+        message: 'dumpcap is not installed. Please install Wireshark to use this feature.'
       });
     }
 

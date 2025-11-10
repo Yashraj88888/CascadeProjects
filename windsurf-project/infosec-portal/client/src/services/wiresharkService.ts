@@ -1,6 +1,39 @@
-import { EventEmitter } from 'events';
+import api from './api';
 
-// Event types
+// Custom EventEmitter implementation for browser environment
+class EventEmitter {
+  private listeners: { [event: string]: Function[] } = {};
+
+  on(event: string, listener: Function) {
+    if (!this.listeners[event]) {
+      this.listeners[event] = [];
+    }
+    this.listeners[event].push(listener);
+    return this;
+  }
+
+  off(event: string, listener: Function) {
+    if (!this.listeners[event]) return this;
+    const index = this.listeners[event].indexOf(listener);
+    if (index > -1) {
+      this.listeners[event].splice(index, 1);
+    }
+    return this;
+  }
+
+  emit(event: string, ...args: any[]) {
+    if (!this.listeners[event]) return false;
+    this.listeners[event].forEach(listener => {
+      try {
+        listener(...args);
+      } catch (error) {
+        console.error(`Error in event handler for ${event}:`, error);
+      }
+    });
+    return true;
+  }
+}
+
 type EventMap = {
   status: (status: CaptureStatus) => void;
   packets: (packets: PacketInfo[]) => void;
@@ -14,7 +47,17 @@ const isValidIP = (ip: string): boolean => {
   return ipv4Pattern.test(ip) || ipv6Pattern.test(ip);
 };
 
-const WS_URL = process.env.REACT_APP_WS_URL || `ws://${window.location.hostname}:5002`;
+// Get WebSocket URL from environment or use current host with WebSocket protocol
+const getWebSocketUrl = () => {
+  if (import.meta.env.VITE_WS_URL) {
+    return import.meta.env.VITE_WS_URL;
+  }
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const host = window.location.host;
+  return `${protocol}//${host}`;
+};
+
+const WS_URL = getWebSocketUrl();
 
 export interface CaptureStatus {
   status: 'running' | 'completed' | 'error';
@@ -51,12 +94,12 @@ class WiresharkService {
   }
 
   // Event handling
-  public on<K extends keyof EventMap>(event: K, listener: EventMap[K]): this {
+  on<K extends keyof EventMap>(event: K, listener: EventMap[K]): this {
     this.emitter.on(event as string, listener as (...args: any[]) => void);
     return this;
   }
 
-  public off<K extends keyof EventMap>(event: K, listener: EventMap[K]): this {
+  off<K extends keyof EventMap>(event: K, listener: EventMap[K]): this {
     this.emitter.off(event as string, listener as (...args: any[]) => void);
     return this;
   }
@@ -85,7 +128,7 @@ class WiresharkService {
         try {
           const data = JSON.parse(event.data as string);
           
-          // Handle message-specific handlers
+          // Handle message-specific handlers first
           if (data.requestId && this.messageHandlers.has(data.requestId)) {
             const handler = this.messageHandlers.get(data.requestId);
             if (handler) {
@@ -110,9 +153,8 @@ class WiresharkService {
         this.isConnected = false;
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
           this.reconnectAttempts++;
-          const delay = this.reconnectDelay * this.reconnectAttempts;
-          console.log(`Connection lost. Reconnecting in ${delay}ms...`);
-          setTimeout(() => this.connect(), delay);
+          console.log(`Connection lost. Reconnecting attempt ${this.reconnectAttempts}...`);
+          setTimeout(() => this.connect(), this.reconnectDelay * this.reconnectAttempts);
         } else {
           this.emit('error', new Error('Max reconnection attempts reached'));
         }
@@ -132,7 +174,7 @@ class WiresharkService {
   public async startCapture(
     ipAddress: string,
     duration: number = 30,
-    interfaceName: string = 'eth0'
+    interfaceName: string = 'wlan0'  // Changed default to wlan0 which is common on Kali
   ): Promise<{ captureId: string }> {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       throw new Error('WebSocket not connected');
@@ -146,8 +188,8 @@ class WiresharkService {
       const requestId = `start_${Date.now()}`;
       const timeout = setTimeout(() => {
         this.messageHandlers.delete(requestId);
-        reject(new Error('Start capture timeout'));
-      }, 10000);
+        reject(new Error('Start capture timeout. Please check if tshark has the correct permissions.'));
+      }, 15000);  // Increased timeout to 15 seconds
 
       const onResponse = (data: any) => {
         if (data.requestId === requestId) {
@@ -156,24 +198,66 @@ class WiresharkService {
           
           if (data.status === 'capture_started') {
             this.captureId = data.captureId;
+            this.emit('status', { 
+              status: 'running', 
+              packets: 0,
+              message: 'Capture started successfully',
+              captureId: data.captureId
+            });
             resolve({ captureId: data.captureId });
           } else {
-            reject(new Error(data.message || 'Failed to start capture'));
+            const errorMsg = data.message || 'Failed to start capture';
+            this.emit('error', new Error(errorMsg));
+            reject(new Error(errorMsg));
           }
         }
       };
 
       this.messageHandlers.set(requestId, onResponse);
 
-      const captureConfig = {
-        action: 'start',
-        requestId,
-        target: ipAddress,
-        duration,
-        interface: interfaceName
-      };
+      // Get list of available interfaces first
+      this.getInterfaces()
+        .then(interfaces => {
+          // Use the specified interface if it exists, otherwise use the first available one
+          const targetInterface = interfaces.includes(interfaceName) 
+            ? interfaceName 
+            : interfaces.length > 0 ? interfaces[0] : 'wlan0';
 
-      this.ws?.send(JSON.stringify(captureConfig));
+          const captureConfig = {
+            action: 'start',
+            requestId,
+            target: ipAddress,
+            duration,
+            interface: targetInterface,
+            // Add additional tshark options for better compatibility
+            options: {
+              // Disable packet limit
+              '--no-promiscuous-mode': '',
+              // Disable name resolution for better performance
+              '-n': ''
+            }
+          };
+
+          console.log('Starting capture with config:', captureConfig);
+          this.ws?.send(JSON.stringify(captureConfig));
+        })
+        .catch(error => {
+          console.error('Error getting network interfaces:', error);
+          // Fallback to default interface if getting interfaces fails
+          const captureConfig = {
+            action: 'start',
+            requestId,
+            target: ipAddress,
+            duration,
+            interface: 'wlan0',
+            options: {
+              '--no-promiscuous-mode': '',
+              '-n': ''
+            }
+          };
+          console.log('Using fallback interface. Starting capture with config:', captureConfig);
+          this.ws?.send(JSON.stringify(captureConfig));
+        });
     });
   }
 
@@ -213,37 +297,51 @@ class WiresharkService {
     });
   }
 
-  public getInterfaces(): Promise<string[]> {
+  public async getInterfaces(): Promise<string[]> {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      return Promise.reject(new Error('WebSocket not connected'));
+      console.warn('WebSocket not connected, using default interfaces');
+      return ['wlan0', 'eth0', 'lo'];
     }
 
     return new Promise((resolve, reject) => {
       const requestId = `interfaces_${Date.now()}`;
       const timeout = setTimeout(() => {
         this.messageHandlers.delete(requestId);
-        reject(new Error('Get interfaces timeout'));
-      }, 5000);
+        console.warn('Get interfaces timeout, using default interfaces');
+        resolve(['wlan0', 'eth0', 'lo']); // Return default interfaces on timeout
+      }, 3000); // Reduced timeout to 3 seconds
 
       const onResponse = (data: any) => {
         if (data.requestId === requestId) {
           clearTimeout(timeout);
           this.messageHandlers.delete(requestId);
           
-          if (data.interfaces && Array.isArray(data.interfaces)) {
+          if (data.interfaces && Array.isArray(data.interfaces) && data.interfaces.length > 0) {
+            console.log('Available interfaces:', data.interfaces);
             resolve(data.interfaces);
           } else {
-            reject(new Error('Invalid response format for interfaces'));
+            console.warn('No interfaces found in response, using defaults');
+            resolve(['wlan0', 'eth0', 'lo']);
           }
         }
       };
 
       this.messageHandlers.set(requestId, onResponse);
 
-      this.ws?.send(JSON.stringify({
-        action: 'get_interfaces',
-        requestId
-      }));
+try {
+  if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+    this.ws.send(JSON.stringify({
+      action: 'get_interfaces',
+      requestId
+    }));
+  } else {
+    console.error('WebSocket is not connected');
+    resolve(['wlan0', 'eth0', 'lo']);
+  }
+} catch (error) {
+  console.error('Error sending get_interfaces request:', error);
+  resolve(['wlan0', 'eth0', 'lo']);
+}
     });
   }
 
@@ -263,7 +361,7 @@ class WiresharkService {
 export const wiresharkService = new WiresharkService();
 
 // Backward compatibility with existing code
-export function startCapture(ipAddress: string, duration: number = 30, interfaceName: string = 'eth0') {
+export function startCapture(ipAddress: string, duration: number = 30, interfaceName: string = 'wlan0') {
   return wiresharkService.startCapture(ipAddress, duration, interfaceName);
 }
 
@@ -286,4 +384,4 @@ export function getLivePackets(): Promise<PacketInfo[]> {
 
 export function getDetailedPackets(): Promise<PacketInfo[]> {
   return Promise.resolve([]);
-}
+};

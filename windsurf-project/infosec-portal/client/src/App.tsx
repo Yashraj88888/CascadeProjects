@@ -8,6 +8,7 @@ import ZapScanner from './components/tools/ZapScanner';
 import NmapScanner from './components/tools/NmapScanner';
 import WiresharkAnalyzer from './components/tools/WiresharkAnalyzer';
 import JohnTheRipper from './components/tools/JohnTheRipper';
+import FileEncryptor from './components/tools/FileEncryptor';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
                 <NavLink to="/nmap">Nmap</NavLink>
                 <NavLink to="/wireshark">Wireshark</NavLink>
                 <NavLink to="/john">John the Ripper</NavLink>
+                <NavLink to="/file-encryptor">File Encryptor</NavLink>
               </div>
             </div>
           </div>
@@ -38,6 +40,7 @@ function App() {
           <Route path="/nmap" element={<NmapScanner />} />
           <Route path="/wireshark" element={<WiresharkAnalyzer />} />
           <Route path="/john" element={<JohnTheRipper />} />
+          <Route path="/file-encryptor" element={<FileEncryptor />} />
         </Routes>
       </main>
     </div>

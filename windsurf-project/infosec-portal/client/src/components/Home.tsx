@@ -31,6 +31,11 @@ const Home: React.FC = () => {
         <Card title="Nmap" desc="Scan target hosts for open ports and services" to="/nmap" />
         <Card title="Wireshark" desc="Analyze packet captures (.pcap)" to="/wireshark" />
         <Card title="John the Ripper" desc="Attempt to crack hashes with a wordlist" to="/john" />
+        <Card 
+          title="File Encryptor" 
+          desc="Encrypt and decrypt files using various encryption algorithms" 
+          to="/file-encryptor" 
+        />
       </div>
     </div>
   );

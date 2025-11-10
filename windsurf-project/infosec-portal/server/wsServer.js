@@ -75,12 +75,31 @@ wss.on('connection', (ws) => {
 });
 
 function startCapture(ws, options) {
-  const { target, duration = 30, interface: iface = 'eth0', requestId } = options;
+  const { target, duration = 30, interface: iface = 'wlan0', requestId } = options;
   const captureId = `capture_${Date.now()}`;
 
-  // Build tshark command
-  const filter = `host ${target}`;
-  const command = `tshark -i ${iface} -f "${filter}" -T fields -e frame.number -e frame.time -e ip.src -e ip.dst -e _ws.col.Protocol -e frame.len -e _ws.col.Info -E header=n -E separator=, -E quote=n -a duration:${duration}`;
+  // Validate interface
+  const validInterface = /^[a-zA-Z0-9]+$/.test(iface) ? iface : 'wlan0';
+  
+  try {
+    // Build tshark command for real-time packet display
+    const filter = `host ${target} and not port 5001 and not port 5002`;
+    const command = `tshark \
+      -i ${validInterface} \
+      -f "${filter}" \
+      -T fields \
+      -e frame.time_relative \
+      -e ip.src \
+      -e ip.dst \
+      -e _ws.col.Protocol \
+      -e frame.len \
+      -e _ws.col.Info \
+      -E header=n \
+      -E separator=│ \
+      -E quote=n \
+      -n \
+      --no-promiscuous-mode \
+      -a duration:${duration}`.replace(/\s+/g, ' ').trim();
 
   console.log(`Starting capture ${captureId}: ${command}`);
 
@@ -88,59 +107,163 @@ function startCapture(ws, options) {
     process: exec(command, { maxBuffer: 1024 * 1024 * 10 }), // 10MB buffer
     ws,
     startTime: Date.now(),
-    packetCount: 0
+    packetCount: 0,
+    lastPacketTime: 0
   };
 
+  // Send initial status
+  ws.send(JSON.stringify({
+    type: 'status',
+    captureId,
+    status: 'starting',
+    message: `Starting capture on ${validInterface} for ${target}`
+  }));
+
+  // Buffer for collecting packet data
+  let buffer = '';
+  
   capture.process.stdout.on('data', (data) => {
-    const packets = parseTsharkOutput(data);
-    if (packets.length === 0) return;
+    try {
+      buffer += data.toString();
+      const lines = buffer.split('\n');
+      
+      // Keep the last incomplete line in the buffer
+      buffer = lines.pop() || '';
+      
+      // Process complete lines
+      const packets = [];
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        
+        const parts = line.split('│').map(part => part.trim());
+        if (parts.length >= 5) {
+          const [time, source, dest, protocol, length, ...infoParts] = parts;
+          const info = infoParts.join('│').trim();
+          
+          const packet = {
+            time: parseFloat(time) || 0,
+            source: source || 'N/A',
+            destination: dest || 'N/A',
+            protocol: protocol || 'N/A',
+            length: parseInt(length) || 0,
+            info: info || ''
+          };
+          
+          packets.push(packet);
+        }
+      }
 
-    capture.packetCount += packets.length;
-
-    ws.send(JSON.stringify({
-      type: 'packets',
-      captureId,
-      packets
-    }));
-
-    // Send status update
-    ws.send(JSON.stringify({
-      type: 'status',
-      captureId,
-      status: 'running',
-      packets: capture.packetCount,
-      elapsed: Math.floor((Date.now() - capture.startTime) / 1000)
-    }));
+      if (packets.length > 0) {
+        capture.packetCount += packets.length;
+        
+        // Send packets to client
+        ws.send(JSON.stringify({
+          type: 'packet',
+          captureId,
+          packets: packets,
+          packetCount: capture.packetCount,
+          timestamp: Date.now()
+        }));
+      }
+      
+      // Update status every second
+      const now = Date.now();
+      if (!capture.lastStatusUpdate || now - capture.lastStatusUpdate > 1000) {
+        ws.send(JSON.stringify({
+          type: 'status',
+          captureId,
+          status: 'running',
+          packets: capture.packetCount,
+          elapsed: Math.floor((now - capture.startTime) / 1000)
+        }));
+        capture.lastStatusUpdate = now;
+      }
+    } catch (error) {
+      console.error('Error processing packet data:', error);
+    }
   });
 
   capture.process.stderr.on('data', (data) => {
-    console.error(`tshark stderr: ${data}`);
+    const error = data.toString().trim();
+    if (error && !error.includes('tshark: The standard streams are not tty')) {
+      console.error(`tshark stderr: ${error}`);
+      
+      // Send error to client if it's a critical error
+      if (error.includes('permission') || error.includes('denied')) {
+        ws.send(JSON.stringify({
+          type: 'status',
+          captureId,
+          status: 'error',
+          message: `Permission error: ${error}. Make sure tshark has the correct permissions.`
+        }));
+      }
+    }
   });
 
-  capture.process.on('close', (code) => {
-    console.log(`Capture ${captureId} ended with code ${code}`);
+  capture.process.on('error', (error) => {
+    console.error(`Failed to start capture process: ${error.message}`);
+    ws.send(JSON.stringify({
+      type: 'status',
+      captureId,
+      status: 'error',
+      message: `Failed to start capture: ${error.message}`
+    }));
     activeCaptures.delete(captureId);
+  });
+
+  capture.process.on('close', (code, signal) => {
+    console.log(`Capture ${captureId} ended with code ${code}, signal ${signal}`);
+    activeCaptures.delete(captureId);
+
+    const endTime = Date.now();
+    const elapsed = Math.floor((endTime - capture.startTime) / 1000);
+    
+    let status = 'completed';
+    let message = 'Capture completed';
+    
+    if (code !== 0 || signal) {
+      status = 'error';
+      message = `Capture ended with code ${code || 'unknown'}`;
+      if (signal) message += `, signal ${signal}`;
+    }
 
     ws.send(JSON.stringify({
       type: 'status',
       captureId,
-      status: code === 0 ? 'completed' : 'error',
+      status,
       packets: capture.packetCount,
-      elapsed: Math.floor((Date.now() - capture.startTime) / 1000),
-      message: code === 0 ? 'Capture completed' : `Capture failed with code ${code}`
+      elapsed,
+      message
     }));
   });
 
+  // Store the capture with additional metadata
+  capture.startTime = Date.now();
+  capture.lastPacketUpdate = 0;
+  capture.lastStatusUpdate = 0;
   activeCaptures.set(captureId, capture);
 
-  // Send confirmation
-  ws.send(JSON.stringify({
-    requestId,
-    type: 'status',
-    captureId,
-    status: 'capture_started',
-    message: `Started capturing traffic for ${target} on ${iface}`
-  }));
+  // Send confirmation after a short delay to ensure process starts
+  setTimeout(() => {
+    if (activeCaptures.has(captureId)) {
+      ws.send(JSON.stringify({
+        requestId,
+        type: 'status',
+        captureId,
+        status: 'capture_started',
+        message: `Started capturing traffic for ${target} on ${validInterface}`
+      }));
+    }
+  }, 500);
+  } catch (error) {
+    console.error('Error in startCapture:', error);
+    ws.send(JSON.stringify({
+      type: 'status',
+      captureId,
+      status: 'error',
+      message: `Failed to start capture: ${error.message}`
+    }));
+  }
 }
 
 function stopCapture(captureId) {
